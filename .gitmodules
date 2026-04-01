@@ -7,9 +7,6 @@
 [submodule "panel"]
 	path = panel
 	url = https://github.com/kleffio/panel
-[submodule "www"]
-	path = www
-	url = https://github.com/kleffio/www
 [submodule "docs"]
 	path = docs
 	url = https://github.com/kleffio/docs
