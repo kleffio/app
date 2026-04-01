@@ -1,0 +1,36 @@
+[submodule "daemon"]
+	path = daemon
+	url = https://github.com/kleffio/daemon
+[submodule "platform"]
+	path = platform
+	url = https://github.com/kleffio/platform
+[submodule "panel"]
+	path = panel
+	url = https://github.com/kleffio/panel
+[submodule "www"]
+	path = www
+	url = https://github.com/kleffio/www
+[submodule "docs"]
+	path = docs
+	url = https://github.com/kleffio/docs
+[submodule "packages/ui"]
+	path = packages/ui
+	url = https://github.com/kleffio/ui
+[submodule "plugins/plugin-registry"]
+	path = plugins/plugin-registry
+	url = https://github.com/kleffio/plugin-registry
+[submodule "plugins/plugin-sdk-go"]
+	path = plugins/plugin-sdk-go
+	url = https://github.com/kleffio/plugin-sdk-go
+[submodule "plugins/plugin-sdk-js"]
+	path = plugins/plugin-sdk-js
+	url = https://github.com/kleffio/plugin-sdk-js
+[submodule "plugins/keycloak-plugin"]
+	path = plugins/keycloak-plugin
+	url = https://github.com/kleffio/keycloak-plugin
+[submodule "plugins/components-plugin"]
+	path = plugins/components-plugin
+	url = https://github.com/kleffio/components-plugin
+[submodule "plugins/kleff-plugin-template"]
+	path = plugins/kleff-plugin-template
+	url = https://github.com/kleffio/kleff-plugin-template
