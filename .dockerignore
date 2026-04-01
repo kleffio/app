@@ -1,0 +1,12 @@
+.git
+.gitignore
+**/node_modules
+**/.next
+**/.DS_Store
+**/Thumbs.db
+**/.env
+**/.env.local
+.pnpm-store
+docs/
+www/
+panel/

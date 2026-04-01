@@ -1,0 +1,112 @@
+name: kleff
+
+services:
+
+  # ── Panel (Next.js management UI) ─────────────────────────────────────────
+  panel:
+    build:
+      context: ./panel
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://api:8080
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://api:8080
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Platform API (Go control plane) ───────────────────────────────────────
+  api:
+    build:
+      context: ./platform
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      HTTP_PORT: 8080
+      DATABASE_URL: postgres://kleff:kleff@postgres:5432/kleff?sslmode=disable
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      LOG_LEVEL: info
+      RUNTIME_PROVIDER: docker
+      PLUGIN_NETWORK: kleff
+      SECRET_KEY: change-me  # change this — encrypts plugin secrets at rest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  # ── Component Showcase Plugin (frontend JS bundle served via nginx) ────────
+  plugin-components:
+    build:
+      context: ./plugins/components-plugin
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kleff
+      POSTGRES_PASSWORD: kleff
+      POSTGRES_DB: kleff
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    configs:
+      - source: postgres-init
+        target: /docker-entrypoint-initdb.d/init-dbs.sh
+        mode: 0755
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kleff -d kleff"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+networks:
+  default:
+    name: kleff
+
+volumes:
+  postgres_data:
+
+configs:
+  postgres-init:
+    content: |
+      #!/bin/bash
+      set -e
+
+      psql -v ON_ERROR_STOP=1 --username "$$POSTGRES_USER" --dbname "$$POSTGRES_DB" <<-EOSQL
+          CREATE TABLE IF NOT EXISTS plugins (
+              id           TEXT PRIMARY KEY,
+              type         TEXT NOT NULL,
+              display_name TEXT NOT NULL,
+              image        TEXT NOT NULL,
+              version      TEXT NOT NULL,
+              grpc_addr    TEXT NOT NULL DEFAULT '',
+              frontend_url TEXT,
+              config       JSONB NOT NULL DEFAULT '{}',
+              secrets      JSONB NOT NULL DEFAULT '{}',
+              enabled      BOOLEAN NOT NULL DEFAULT true,
+              installed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS settings (
+              key   TEXT PRIMARY KEY,
+              value TEXT NOT NULL
+          );
+      EOSQL
