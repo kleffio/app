@@ -28,6 +28,6 @@
 [submodule "plugins/components-plugin"]
 	path = plugins/components-plugin
 	url = https://github.com/kleffio/components-plugin
-[submodule "plugins/kleff-plugin-template"]
-	path = plugins/kleff-plugin-template
-	url = https://github.com/kleffio/kleff-plugin-template
+[submodule "plugins/plugin-template"]
+	path = plugins/plugin-template
+	url = https://github.com/kleffio/plugin-template
