@@ -1,1 +1,9 @@
 .claude/
+plugins/*
+!plugins/plugin-registry
+!plugins/plugin-sdk-go
+!plugins/plugin-sdk-js
+!plugins/keycloak-plugin
+!plugins/components-plugin
+!plugins/plugin-template
+plugins/hello-plugin/
