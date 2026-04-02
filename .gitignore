@@ -6,4 +6,3 @@ plugins/*
 !plugins/keycloak-plugin
 !plugins/components-plugin
 !plugins/plugin-template
-plugins/hello-plugin/
