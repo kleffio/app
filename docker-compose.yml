@@ -28,6 +28,7 @@ services:
     user: root
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./plugins/plugin-registry/plugins.json:/registry/plugins.json:ro
     environment:
       HTTP_PORT: 8080
       DATABASE_URL: postgres://kleff:kleff@postgres:5432/kleff?sslmode=disable
@@ -36,6 +37,7 @@ services:
       RUNTIME_PROVIDER: docker
       PLUGIN_NETWORK: kleff
       SECRET_KEY: change-me  # change this — encrypts plugin secrets at rest
+      PLUGIN_REGISTRY_URL: file:///registry/plugins.json
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,15 +47,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
-    restart: unless-stopped
-
-  # ── Component Showcase Plugin (frontend JS bundle served via nginx) ────────
-  plugin-components:
-    build:
-      context: ./plugins/components-plugin
-      dockerfile: Dockerfile
-    ports:
-      - "3001:3001"
     restart: unless-stopped
 
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
@@ -78,4 +71,3 @@ networks:
 
 volumes:
   postgres_data:
-
