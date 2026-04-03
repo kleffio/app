@@ -65,10 +65,6 @@ services:
       POSTGRES_DB: kleff
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    configs:
-      - source: postgres-init
-        target: /docker-entrypoint-initdb.d/init-dbs.sh
-        mode: 0755
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U kleff -d kleff"]
       interval: 5s
@@ -83,30 +79,3 @@ networks:
 volumes:
   postgres_data:
 
-configs:
-  postgres-init:
-    content: |
-      #!/bin/bash
-      set -e
-
-      psql -v ON_ERROR_STOP=1 --username "$$POSTGRES_USER" --dbname "$$POSTGRES_DB" <<-EOSQL
-          CREATE TABLE IF NOT EXISTS plugins (
-              id           TEXT PRIMARY KEY,
-              type         TEXT NOT NULL,
-              display_name TEXT NOT NULL,
-              image        TEXT NOT NULL,
-              version      TEXT NOT NULL,
-              grpc_addr    TEXT NOT NULL DEFAULT '',
-              frontend_url TEXT,
-              config       JSONB NOT NULL DEFAULT '{}',
-              secrets      JSONB NOT NULL DEFAULT '{}',
-              enabled      BOOLEAN NOT NULL DEFAULT true,
-              installed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-              updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-          );
-
-          CREATE TABLE IF NOT EXISTS settings (
-              key   TEXT PRIMARY KEY,
-              value TEXT NOT NULL
-          );
-      EOSQL
