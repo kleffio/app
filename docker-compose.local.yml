@@ -1,0 +1,110 @@
+name: kleff-local
+
+# Local build + test compose.
+# Builds panel, platform, and all plugin images from source automatically —
+# no manual docker build steps required.
+#
+# Usage:
+#   docker compose -f docker-compose.local.yml up --build
+#   docker compose -f docker-compose.local.yml down -v      # tear down incl. volumes
+
+services:
+
+  # ── Panel (Next.js management UI) ─────────────────────────────────────────
+  panel:
+    build:
+      context: ./panel
+      dockerfile: Dockerfile
+      args:
+        # Direct browser → API for local testing (CORS is open for localhost:3000).
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+        # API base URL for server-side Next.js rewrites at build time.
+        API_BASE_URL: http://api:8080
+    image: kleff/panel:local
+    ports:
+      - "3000:3000"
+    environment:
+      # Server-side rewrite proxy (Next.js → API, container-to-container).
+      API_BASE_URL: http://api:8080
+      # Browser-side base URL (user's browser → API via the exposed port).
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # ── Plugin image builders ─────────────────────────────────────────────────
+  # These services build plugin images from source and exit immediately.
+  # The platform uses these images when a plugin is installed via the UI.
+  keycloak-plugin-build:
+    build:
+      context: ./plugins/keycloak-plugin
+    image: ghcr.io/kleffio/idp-keycloak:0.1.4
+    entrypoint: ["/bin/sh", "-c", "exit 0"]
+    restart: "no"
+
+  authentik-plugin-build:
+    build:
+      context: ./plugins/authentik-plugin
+    image: ghcr.io/kleffio/idp-authentik:local
+    entrypoint: ["/bin/sh", "-c", "exit 0"]
+    restart: "no"
+
+  # ── Platform API (Go control plane) ───────────────────────────────────────
+  api:
+    build:
+      context: ./platform
+      dockerfile: Dockerfile
+    image: kleff/platform:local
+    ports:
+      - "8080:8080"
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./plugins/plugin-registry/plugins.local.json:/app/plugins.local.json:ro
+    environment:
+      KLEFF_ENV: local
+      PLUGIN_REGISTRY_URL: file:///app/plugins.local.json
+      HTTP_PORT: 8080
+      DATABASE_URL: postgres://kleff:kleff@postgres:5432/kleff?sslmode=disable
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      LOG_LEVEL: debug
+      RUNTIME_PROVIDER: docker
+      PLUGIN_NETWORK: kleff-local
+      SECRET_KEY: local-dev-secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak-plugin-build:
+        condition: service_completed_successfully
+      authentik-plugin-build:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: kleff
+      POSTGRES_PASSWORD: kleff
+      POSTGRES_DB: kleff
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kleff -d kleff"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+networks:
+  default:
+    name: kleff-local
+
+volumes:
+  postgres_local_data:
