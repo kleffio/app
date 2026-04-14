@@ -20,11 +20,9 @@ services:
       - "3000:3000"
     volumes:
       # Mount source for HMR — node_modules stay inside the image.
-      - ./panel:/workspace/panel
-      # Override installed @kleffio/ui with local source for live development.
-      - ./packages/ui:/workspace/panel/node_modules/@kleffio/ui
-      - /workspace/panel/node_modules
-      - /workspace/panel/.next
+      - ./panel:/app
+      - /app/node_modules
+      - /app/.next
     environment:
       # Server-side rewrite proxy (Next.js → API, container-to-container).
       API_BASE_URL: http://api:8080
