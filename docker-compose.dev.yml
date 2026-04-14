@@ -23,6 +23,10 @@ services:
       - ./panel:/app
       - /app/node_modules
       - /app/.next
+      # Override the GitHub-installed @kleffio/ui with the local monorepo source.
+      # Docker applies the more-specific mount, shadowing node_modules/@kleffio/ui
+      # from the anonymous volume. Edits to packages/ui are picked up by HMR.
+      - ./packages/ui:/app/node_modules/@kleffio/ui
     environment:
       # Server-side rewrite proxy (Next.js → API, container-to-container).
       API_BASE_URL: http://api:8080
