@@ -14,15 +14,15 @@ services:
   panel:
     build:
       context: ./panel
-      dockerfile: Dockerfile
-      args:
-        # Direct browser → API for local testing (CORS is open for localhost:3000).
-        NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
-        # API base URL for server-side Next.js rewrites at build time.
-        API_BASE_URL: http://api:8080
-    image: kleff/panel:local
+      dockerfile: Dockerfile.dev
+    image: kleff/panel:dev
     ports:
       - "3000:3000"
+    volumes:
+      # Mount source for HMR — node_modules stay inside the image.
+      - ./panel:/app
+      - /app/node_modules
+      - /app/.next
     environment:
       # Server-side rewrite proxy (Next.js → API, container-to-container).
       API_BASE_URL: http://api:8080
@@ -38,7 +38,7 @@ services:
   keycloak-plugin-build:
     build:
       context: ./plugins/keycloak-plugin
-    image: ghcr.io/kleffio/idp-keycloak:0.1.4
+    image: ghcr.io/kleffio/idp-keycloak:local
     entrypoint: ["/bin/sh", "-c", "exit 0"]
     restart: "no"
 
@@ -46,6 +46,13 @@ services:
     build:
       context: ./plugins/authentik-plugin
     image: ghcr.io/kleffio/idp-authentik:local
+    entrypoint: ["/bin/sh", "-c", "exit 0"]
+    restart: "no"
+
+  components-plugin-build:
+    build:
+      context: ./plugins/components-plugin
+    image: ghcr.io/kleffio/plugin-components:local
     entrypoint: ["/bin/sh", "-c", "exit 0"]
     restart: "no"
 
@@ -60,7 +67,7 @@ services:
     user: root
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./plugins/plugin-registry/plugins.local.json:/app/plugins.local.json:ro
+      - ./plugins.local.json:/app/plugins.local.json:ro
     environment:
       KLEFF_ENV: local
       PLUGIN_REGISTRY_URL: file:///app/plugins.local.json
@@ -77,6 +84,8 @@ services:
       keycloak-plugin-build:
         condition: service_completed_successfully
       authentik-plugin-build:
+        condition: service_completed_successfully
+      components-plugin-build:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz || exit 1"]
