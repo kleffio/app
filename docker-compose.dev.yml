@@ -82,7 +82,10 @@ services:
       RUNTIME_PROVIDER: docker
       PLUGIN_NETWORK: kleff-local
       SECRET_KEY: local-dev-secret
+      REDIS_URL: redis://redis:6379/0
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       keycloak-plugin-build:
@@ -98,6 +101,38 @@ services:
       retries: 5
       start_period: 5s
 
+  # ── Redis (job queue) ─────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Daemon (game-server provisioner) ──────────────────────────────────────
+  daemon:
+    build:
+      context: ./daemon
+      dockerfile: Dockerfile
+    image: kleff/daemon:local
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      KLEFF_QUEUE_BACKEND: redis
+      KLEFF_REDIS_URL: redis://redis:6379/0
+      KLEFF_NODE_ID: local-node
+      KLEFF_PLATFORM_URL: http://api:8080
+      KLEFF_SHARED_SECRET: local-dev-secret
+    depends_on:
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
@@ -110,10 +145,11 @@ services:
     volumes:
       - postgres_local_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kleff -d kleff"]
+      test: ["CMD-SHELL", "psql -h localhost -U kleff -d kleff -c 'SELECT 1' > /dev/null 2>&1"]
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 10s
 
 networks:
   default:

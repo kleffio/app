@@ -8,11 +8,13 @@ services:
       context: ./panel
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: http://api:8080
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+        API_BASE_URL: http://api:8080
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://api:8080
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+      API_BASE_URL: http://api:8080
     depends_on:
       api:
         condition: service_healthy
@@ -36,9 +38,12 @@ services:
       LOG_LEVEL: info
       RUNTIME_PROVIDER: docker
       PLUGIN_NETWORK: kleff
-      SECRET_KEY: change-me  # change this — encrypts plugin secrets at rest
+      SECRET_KEY: dev-secret
       PLUGIN_REGISTRY_URL: file:///registry/plugins.json
+      REDIS_URL: redis://redis:6379/0
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
     healthcheck:
@@ -47,6 +52,37 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+    restart: unless-stopped
+
+  # ── Redis (job queue) ─────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Daemon (game-server provisioner) ──────────────────────────────────────
+  daemon:
+    build:
+      context: ./daemon
+      dockerfile: Dockerfile
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      KLEFF_QUEUE_BACKEND: redis
+      KLEFF_REDIS_URL: redis://redis:6379/0
+      KLEFF_NODE_ID: local-node
+      KLEFF_PLATFORM_URL: http://api:8080
+      KLEFF_SHARED_SECRET: dev-secret
+    depends_on:
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
@@ -63,6 +99,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 30s
     restart: unless-stopped
 
 networks:
