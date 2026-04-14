@@ -1,0 +1,2 @@
+overrides:
+  '@kleffio/ui': link:../packages/ui
