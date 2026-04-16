@@ -34,3 +34,6 @@
 [submodule "plugins/authentik-plugin"]
 	path = plugins/authentik-plugin
 	url = https://github.com/kleffio/authentik-plugin
+[submodule "crate-registry"]
+	path = crate-registry
+	url = https://github.com/kleffio/crate-registry

@@ -38,8 +38,12 @@ services:
       PLUGIN_NETWORK: kleff
       SECRET_KEY: change-me  # change this — encrypts plugin secrets at rest
       PLUGIN_REGISTRY_URL: file:///registry/plugins.json
+      KLEFF_SHARED_SECRET: change-me-node-bootstrap
+      DAEMON_QUEUE_REDIS_URL: redis://redis:6379/0
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz || exit 1"]
@@ -47,6 +51,38 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+    restart: unless-stopped
+
+  # ── Gameserver daemon (execution worker) ──────────────────────────────────
+  daemon:
+    build:
+      context: ./daemon
+      dockerfile: Dockerfile
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - daemon_data:/var/lib/kleffd/data
+    environment:
+      KLEFF_NODE_ID: daemon-1
+      KLEFF_QUEUE_BACKEND: redis
+      KLEFF_REDIS_URL: redis://redis:6379/0
+      KLEFF_PLATFORM_URL: http://api:8080
+      KLEFF_SHARED_SECRET: change-me-node-bootstrap
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Redis (queue transport between API and daemon) ───────────────────────
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     restart: unless-stopped
 
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
@@ -71,3 +107,4 @@ networks:
 
 volumes:
   postgres_data:
+  daemon_data:
