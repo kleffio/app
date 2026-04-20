@@ -37,3 +37,6 @@
 [submodule "crate-registry"]
 	path = crate-registry
 	url = https://github.com/kleffio/crate-registry
+[submodule "contracts"]
+	path = contracts
+	url = ./contracts
