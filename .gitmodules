@@ -1,9 +1,6 @@
 [submodule "daemon"]
 	path = daemon
 	url = https://github.com/kleffio/daemon
-[submodule "platform"]
-	path = platform
-	url = https://github.com/kleffio/platform
 [submodule "panel"]
 	path = panel
 	url = https://github.com/kleffio/panel
@@ -39,4 +36,4 @@
 	url = https://github.com/kleffio/crate-registry
 [submodule "contracts"]
 	path = contracts
-	url = ./contracts
+	url = https://github.com/kleffio/contracts

@@ -1,4 +1,5 @@
 .claude/
+.vscode/
 plugins/*
 !plugins/plugin-registry
 !plugins/plugin-sdk-go

@@ -4,54 +4,29 @@ services:
 
   # ── Panel (Next.js management UI) ─────────────────────────────────────────
   panel:
-    build:
-      context: ./panel
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_BASE_URL: http://api:8080
-    ports:
-      - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: http://api:8080
+    extends:
+      file: ./panel/docker-compose.yml
+      service: web
     depends_on:
       api:
         condition: service_healthy
-    restart: unless-stopped
 
   # ── Platform API (Go control plane) ───────────────────────────────────────
   api:
-    build:
-      context: ./platform
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    user: root
+    extends:
+      file: ./panel/docker-compose.yml
+      service: api
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./plugins/plugin-registry/plugins.json:/registry/plugins.json:ro
     environment:
-      HTTP_PORT: 8080
-      DATABASE_URL: postgres://kleff:kleff@postgres:5432/kleff?sslmode=disable
-      CORS_ALLOWED_ORIGINS: http://localhost:3000
-      LOG_LEVEL: info
-      RUNTIME_PROVIDER: docker
       PLUGIN_NETWORK: kleff
-      SECRET_KEY: change-me  # change this — encrypts plugin secrets at rest
       PLUGIN_REGISTRY_URL: file:///registry/plugins.json
-      KLEFF_SHARED_SECRET: change-me-node-bootstrap
-      DAEMON_QUEUE_REDIS_URL: redis://redis:6379/0
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
-    restart: unless-stopped
 
   # ── Gameserver daemon (execution worker) ──────────────────────────────────
   daemon:
@@ -75,31 +50,17 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # ── Redis (queue transport between API and daemon) ───────────────────────
+  # ── Redis ─────────────────────────────────────────────────────────────────
   redis:
-    image: redis:7-alpine
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    restart: unless-stopped
+    extends:
+      file: ./panel/docker-compose.yml
+      service: redis
 
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
   postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: kleff
-      POSTGRES_PASSWORD: kleff
-      POSTGRES_DB: kleff
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kleff -d kleff"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    restart: unless-stopped
+    extends:
+      file: ./panel/docker-compose.yml
+      service: postgres
 
 networks:
   default:
