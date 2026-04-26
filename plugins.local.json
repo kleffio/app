@@ -79,6 +79,7 @@
     "docs": "https://docs.kleff.io/plugins/components",
     "image": "ghcr.io/kleffio/plugin-components",
     "version": "local",
+    "frontendUrl": "http://localhost:3001/index.js",
     "minKleffVersion": "0.5.0",
     "license": "MIT",
     "verified": true,
@@ -112,6 +113,7 @@
     "verified": true,
     "capabilities": [
       "identity.provider",
+      "identity.framework",
       "ui.manifest"
     ],
     "config": [
@@ -161,6 +163,32 @@
     ]
   },
   {
+    "id": "hello-dotnet",
+    "name": "Hello .NET",
+    "type": "ui",
+    "description": "A demo plugin written in .NET. Adds a nav item and a custom API route that returns .NET runtime info.",
+    "longDescription": "## Hello .NET Plugin\n\nA demonstration plugin built with the Kleff .NET Plugin SDK.\n\n### Features\n- Adds a **Hello .NET** nav item to the sidebar\n- Registers a `GET /p/hello-dotnet/hello` route that returns the .NET runtime version, OS, and the caller's user ID\n\n### Purpose\nThis plugin exists to prove that Kleff plugins can be written in any language that speaks gRPC — including C# / .NET.",
+    "tags": [
+      "dotnet",
+      "demo",
+      "frontend",
+      "backend"
+    ],
+    "author": "Kleff",
+    "repo": "https://github.com/kleffio/hello-dotnet-plugin",
+    "docs": "https://docs.kleff.io/plugins/hello-dotnet",
+    "image": "ghcr.io/kleffio/hello-dotnet",
+    "version": "local",
+    "minKleffVersion": "0.5.0",
+    "license": "MIT",
+    "verified": false,
+    "capabilities": [
+      "ui.manifest",
+      "api.routes"
+    ],
+    "config": []
+  },
+  {
     "id": "idp-authentik",
     "name": "Authentik",
     "type": "idp",
@@ -184,6 +212,7 @@
     "verified": true,
     "capabilities": [
       "identity.provider",
+      "identity.framework",
       "ui.manifest"
     ],
     "config": [

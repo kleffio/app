@@ -33,6 +33,23 @@ services:
     entrypoint: ["/bin/sh", "-c", "exit 0"]
     restart: "no"
 
+  components-plugin:
+    image: ghcr.io/kleffio/plugin-components:local
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    depends_on:
+      components-plugin-build:
+        condition: service_completed_successfully
+
+  hello-dotnet-plugin-build:
+    build:
+      context: .
+      dockerfile: ./plugins/hello-dotnet-plugin/Dockerfile
+    image: ghcr.io/kleffio/hello-dotnet:local
+    entrypoint: ["/bin/sh", "-c", "exit 0"]
+    restart: "no"
+
   # ── Platform API (Go control plane) ───────────────────────────────────────
   api:
     extends:
@@ -54,6 +71,8 @@ services:
       authentik-plugin-build:
         condition: service_completed_successfully
       components-plugin-build:
+        condition: service_completed_successfully
+      hello-dotnet-plugin-build:
         condition: service_completed_successfully
 
   # ── Gameserver daemon (execution worker) ──────────────────────────────────
