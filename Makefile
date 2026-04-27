@@ -1,4 +1,4 @@
-.PHONY: dev dev-detach dev-down dev-clean prod prod-detach prod-down prod-clean logs ps build-plugins cleanup-dev-containers cleanup-dev-volumes help
+.PHONY: dev dev-detach dev-down dev-clean prod prod-detach prod-down prod-clean logs ps build-plugins cleanup-dev-containers cleanup-dev-volumes submodules-main help
 
 # -- Dev ----------------------------------------------------------------------
 
@@ -48,6 +48,25 @@ cleanup-dev-containers:		## Remove all remaining Kleff dev containers
 
 cleanup-dev-volumes:		## Remove all volumes with "kleff" in the name
 	@docker volume rm $$(docker volume ls -q --filter "name=kleff") >/dev/null 2>&1 || true
+
+submodules-main:			## Init all submodules, switch each to main, and fast-forward pull recursively
+	@paths=$$(git config -f .gitmodules --get-regexp '^submodule\..*\.path$$' | awk '{print $$2}'); \
+	for path in $$paths; do \
+		if [ -d "$$path" ] && [ ! -e "$$path/.git" ] && [ -n "$$(ls -A "$$path" 2>/dev/null)" ]; then \
+			echo "Submodule path '$$path' already exists and is not a git submodule checkout."; \
+			echo "Move or remove that directory, then rerun 'make submodules-main'."; \
+			exit 1; \
+		fi; \
+	done
+	git submodule sync --recursive
+	git submodule update --init --recursive
+	git submodule foreach --recursive '\
+		git fetch origin main && \
+		(if git show-ref --verify --quiet refs/heads/main; then git checkout main; else git checkout -b main --track origin/main; fi) && \
+		git pull --ff-only origin main && \
+		git submodule sync --recursive && \
+		git submodule update --init --recursive \
+	'
 
 # -- Help ---------------------------------------------------------------------
 

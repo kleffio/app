@@ -2,6 +2,7 @@
 .vscode/
 .gocache/
 plugins/*
+www/
 !plugins/plugin-registry
 !plugins/plugin-sdk-go
 !plugins/plugin-sdk-js
