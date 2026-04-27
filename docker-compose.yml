@@ -18,10 +18,9 @@ services:
       service: api
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./plugins/plugin-registry/plugins.json:/registry/plugins.json:ro
     environment:
       PLUGIN_NETWORK: kleff
-      PLUGIN_REGISTRY_URL: file:///registry/plugins.json
+      PLUGIN_REGISTRY_URL: https://raw.githubusercontent.com/kleffio/plugin-registry/main/plugins.json
     depends_on:
       postgres:
         condition: service_healthy

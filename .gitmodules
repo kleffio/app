@@ -19,6 +19,9 @@
 [submodule "plugins/plugin-sdk-js"]
 	path = plugins/plugin-sdk-js
 	url = https://github.com/kleffio/plugin-sdk-js
+[submodule "plugins/plugin-sdk-dotnet"]
+	path = plugins/plugin-sdk-dotnet
+	url = https://github.com/kleffio/plugin-sdk-dotnet
 [submodule "plugins/keycloak-plugin"]
 	path = plugins/keycloak-plugin
 	url = https://github.com/kleffio/keycloak-plugin
