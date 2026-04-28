@@ -82,6 +82,7 @@ services:
       RUNTIME_PROVIDER: docker
       PLUGIN_NETWORK: kleff-local
       SECRET_KEY: local-dev-secret
+      KLEFF_SHARED_SECRET: local-dev-secret
       REDIS_URL: redis://redis:6379/0
     depends_on:
       redis:

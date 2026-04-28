@@ -1,0 +1,35 @@
+{
+  "id": "monitoring-prometheus",
+  "name": "Prometheus Metrics",
+  "type": "infra",
+  "tier": 2,
+  "description": "Stores workload metrics in VictoriaMetrics with a PromQL-compatible query interface.",
+  "longDescription": "Collects CPU, memory, network, and disk metrics from all running workloads and stores them in a bundled VictoriaMetrics instance. Metrics are queryable via PromQL and can be visualised with Grafana.",
+  "tags": [],
+  "capabilities": ["monitoring.metrics"],
+  "author": "Kleff",
+  "repo": "https://github.com/kleffio/observability-prometheus",
+  "image": "ghcr.io/kleffio/monitoring-prometheus:latest",
+  "version": "0.1.0",
+  "frontendUrl": "http://kleff-monitoring-prometheus:3001/plugin.js",
+  "license": "MIT",
+  "verified": true,
+  "companions": [
+    {
+      "id": "victoria-metrics",
+      "image": "victoriametrics/victoria-metrics:v1.99.0",
+      "command": [
+        "-retentionPeriod=12",
+        "-storageDataPath=/victoria-metrics-data"
+      ],
+      "ports": [
+        { "container": 8428, "host": 8428 }
+      ],
+      "volumes": [
+        { "name": "kleff-victoria-metrics-data", "target": "/victoria-metrics-data" }
+      ],
+      "internalAddr": "http://victoria-metrics:8428"
+    }
+  ],
+  "config": []
+}
